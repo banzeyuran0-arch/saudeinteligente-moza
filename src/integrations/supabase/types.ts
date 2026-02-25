@@ -106,6 +106,50 @@ export type Database = {
         }
         Relationships: []
       }
+      notifications: {
+        Row: {
+          appointment_id: string
+          created_at: string
+          expires_at: string | null
+          id: string
+          message: string
+          patient_id: string
+          responded: boolean
+          response: string | null
+          type: string
+        }
+        Insert: {
+          appointment_id: string
+          created_at?: string
+          expires_at?: string | null
+          id?: string
+          message: string
+          patient_id: string
+          responded?: boolean
+          response?: string | null
+          type?: string
+        }
+        Update: {
+          appointment_id?: string
+          created_at?: string
+          expires_at?: string | null
+          id?: string
+          message?: string
+          patient_id?: string
+          responded?: boolean
+          response?: string | null
+          type?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "notifications_appointment_id_fkey"
+            columns: ["appointment_id"]
+            isOneToOne: false
+            referencedRelation: "appointments"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       profiles: {
         Row: {
           created_at: string

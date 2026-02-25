@@ -2,3 +2,6 @@ project_id = "bgvzucvjtikfrviguajx"
 
 [functions.clinic-chat]
 verify_jwt = false
+
+[functions.check-reminders]
+verify_jwt = false
