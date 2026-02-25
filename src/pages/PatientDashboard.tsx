@@ -116,7 +116,7 @@ const PatientDashboard = () => {
             <Button variant="ghost" onClick={() => setActiveTab("home")} className="mb-4">
               ← Voltar
             </Button>
-            <AppointmentScheduler userName={userName} onDone={() => setActiveTab("home")} />
+            <AppointmentScheduler userName={userName} onDone={() => setActiveTab("appointments")} />
           </div>
         )}
 
