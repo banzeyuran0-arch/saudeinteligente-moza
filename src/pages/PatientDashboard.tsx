@@ -6,6 +6,7 @@ import { Heart, Calendar, X, MessageCircle, Lock, LogOut } from "lucide-react";
 import AppointmentScheduler from "@/components/AppointmentScheduler";
 import AIChat from "@/components/AIChat";
 import MyAppointments from "@/components/MyAppointments";
+import PatientNotifications from "@/components/PatientNotifications";
 
 const PatientDashboard = () => {
   const navigate = useNavigate();
@@ -72,6 +73,9 @@ const PatientDashboard = () => {
 
       {/* Content */}
       <div className="flex-1 px-4 py-6 max-w-lg mx-auto w-full">
+        {/* Notifications always visible on home */}
+        {activeTab === "home" && <PatientNotifications />}
+
         {activeTab === "home" && (
           <div className="grid grid-cols-2 gap-4 animate-fade-in">
             <button

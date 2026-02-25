@@ -39,7 +39,6 @@ const ExecutiveDashboard = () => {
     }
     fetchData();
 
-    // Realtime
     const channel = supabase
       .channel("exec-realtime")
       .on("postgres_changes", { event: "*", schema: "public", table: "appointments" }, () => fetchData())
@@ -76,6 +75,30 @@ const ExecutiveDashboard = () => {
     }
   };
 
+  const completeAppointment = async (id: string) => {
+    const { error } = await supabase
+      .from("appointments")
+      .update({ status: "completed" })
+      .eq("id", id);
+    if (error) {
+      toast({ title: "Erro ao concluir", variant: "destructive" });
+    } else {
+      toast({ title: "Consulta concluída ✅" });
+    }
+  };
+
+  const cancelAppointment = async (id: string) => {
+    const { error } = await supabase
+      .from("appointments")
+      .update({ status: "cancelled" })
+      .eq("id", id);
+    if (error) {
+      toast({ title: "Erro ao cancelar", variant: "destructive" });
+    } else {
+      toast({ title: "Consulta cancelada" });
+    }
+  };
+
   const handleLogout = () => {
     sessionStorage.removeItem("exec_auth");
     navigate("/executive-login");
@@ -84,7 +107,21 @@ const ExecutiveDashboard = () => {
   const today = new Date().toISOString().split("T")[0];
   const todayAppointments = appointments.filter((a) => a.date === today);
   const scheduled = appointments.filter((a) => a.status === "scheduled");
+  const completed = appointments.filter((a) => a.status === "completed");
   const cancelled = appointments.filter((a) => a.status === "cancelled");
+
+  const statusLabel = (s: string) => {
+    if (s === "scheduled") return "Agendada";
+    if (s === "completed") return "Concluída";
+    if (s === "cancelled") return "Cancelada";
+    return s;
+  };
+
+  const statusStyle = (s: string) => {
+    if (s === "scheduled") return "bg-primary/10 text-primary";
+    if (s === "completed") return "bg-green-100 text-green-700";
+    return "bg-destructive/10 text-destructive";
+  };
 
   return (
     <div className="min-h-screen bg-background">
@@ -123,16 +160,21 @@ const ExecutiveDashboard = () => {
         {activeTab === "dashboard" && (
           <div className="space-y-6 animate-fade-in">
             {/* Stats */}
-            <div className="grid grid-cols-3 gap-3">
+            <div className="grid grid-cols-4 gap-3">
               <div className="bg-card rounded-xl p-4 shadow-card text-center">
                 <Calendar className="w-6 h-6 text-primary mx-auto mb-1" />
                 <p className="text-2xl font-bold text-foreground">{todayAppointments.length}</p>
                 <p className="text-xs text-muted-foreground">Hoje</p>
               </div>
               <div className="bg-card rounded-xl p-4 shadow-card text-center">
-                <CheckCircle className="w-6 h-6 text-primary mx-auto mb-1" />
+                <Clock className="w-6 h-6 text-primary mx-auto mb-1" />
                 <p className="text-2xl font-bold text-foreground">{scheduled.length}</p>
                 <p className="text-xs text-muted-foreground">Agendadas</p>
+              </div>
+              <div className="bg-card rounded-xl p-4 shadow-card text-center">
+                <CheckCircle className="w-6 h-6 text-green-600 mx-auto mb-1" />
+                <p className="text-2xl font-bold text-foreground">{completed.length}</p>
+                <p className="text-xs text-muted-foreground">Concluídas</p>
               </div>
               <div className="bg-card rounded-xl p-4 shadow-card text-center">
                 <XCircle className="w-6 h-6 text-destructive mx-auto mb-1" />
@@ -147,23 +189,39 @@ const ExecutiveDashboard = () => {
                 <Clock className="w-5 h-5 text-primary" /> Atividade Recente
               </h3>
               <div className="space-y-2">
-                {appointments.slice(0, 10).map((apt) => (
-                  <div key={apt.id} className="bg-card rounded-xl p-4 shadow-card flex items-center justify-between">
-                    <div>
-                      <p className="font-semibold text-foreground text-sm">{apt.patient_name}</p>
-                      <p className="text-xs text-muted-foreground">
-                        {apt.doctor_name} • {new Date(apt.date + "T00:00:00").toLocaleDateString("pt-MZ")} às {apt.time}
-                      </p>
+                {appointments.slice(0, 15).map((apt) => (
+                  <div key={apt.id} className="bg-card rounded-xl p-4 shadow-card">
+                    <div className="flex items-center justify-between">
+                      <div>
+                        <p className="font-semibold text-foreground text-sm">{apt.patient_name}</p>
+                        <p className="text-xs text-muted-foreground">
+                          {apt.doctor_name} • {new Date(apt.date + "T00:00:00").toLocaleDateString("pt-MZ")} às {apt.time}
+                        </p>
+                      </div>
+                      <span className={`text-xs px-2 py-1 rounded-full font-medium ${statusStyle(apt.status)}`}>
+                        {statusLabel(apt.status)}
+                      </span>
                     </div>
-                    <span
-                      className={`text-xs px-2 py-1 rounded-full font-medium ${
-                        apt.status === "scheduled"
-                          ? "bg-primary/10 text-primary"
-                          : "bg-destructive/10 text-destructive"
-                      }`}
-                    >
-                      {apt.status === "scheduled" ? "Agendada" : "Cancelada"}
-                    </span>
+
+                    {apt.status === "scheduled" && (
+                      <div className="flex gap-2 mt-3 justify-end">
+                        <Button
+                          size="sm"
+                          onClick={() => completeAppointment(apt.id)}
+                          className="bg-green-600 hover:bg-green-700 text-white h-8 text-xs"
+                        >
+                          <CheckCircle className="w-3.5 h-3.5 mr-1" /> Concluir
+                        </Button>
+                        <Button
+                          size="sm"
+                          variant="outline"
+                          onClick={() => cancelAppointment(apt.id)}
+                          className="text-destructive border-destructive/30 h-8 text-xs"
+                        >
+                          <XCircle className="w-3.5 h-3.5 mr-1" /> Cancelar
+                        </Button>
+                      </div>
+                    )}
                   </div>
                 ))}
                 {appointments.length === 0 && (
