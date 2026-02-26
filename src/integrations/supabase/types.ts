@@ -82,6 +82,108 @@ export type Database = {
         }
         Relationships: []
       }
+      consultation_prices: {
+        Row: {
+          created_at: string
+          description: string
+          doctor_id: string
+          id: string
+          price: number
+        }
+        Insert: {
+          created_at?: string
+          description?: string
+          doctor_id: string
+          id?: string
+          price?: number
+        }
+        Update: {
+          created_at?: string
+          description?: string
+          doctor_id?: string
+          id?: string
+          price?: number
+        }
+        Relationships: [
+          {
+            foreignKeyName: "consultation_prices_doctor_id_fkey"
+            columns: ["doctor_id"]
+            isOneToOne: false
+            referencedRelation: "doctors"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      doctor_absences: {
+        Row: {
+          created_at: string
+          doctor_id: string
+          end_date: string
+          id: string
+          reason: string
+          start_date: string
+        }
+        Insert: {
+          created_at?: string
+          doctor_id: string
+          end_date: string
+          id?: string
+          reason?: string
+          start_date: string
+        }
+        Update: {
+          created_at?: string
+          doctor_id?: string
+          end_date?: string
+          id?: string
+          reason?: string
+          start_date?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "doctor_absences_doctor_id_fkey"
+            columns: ["doctor_id"]
+            isOneToOne: false
+            referencedRelation: "doctors"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      doctor_schedules: {
+        Row: {
+          created_at: string
+          day_of_week: number
+          doctor_id: string
+          end_time: string
+          id: string
+          start_time: string
+        }
+        Insert: {
+          created_at?: string
+          day_of_week: number
+          doctor_id: string
+          end_time: string
+          id?: string
+          start_time: string
+        }
+        Update: {
+          created_at?: string
+          day_of_week?: number
+          doctor_id?: string
+          end_time?: string
+          id?: string
+          start_time?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "doctor_schedules_doctor_id_fkey"
+            columns: ["doctor_id"]
+            isOneToOne: false
+            referencedRelation: "doctors"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       doctors: {
         Row: {
           available: boolean
