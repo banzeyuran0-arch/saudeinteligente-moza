@@ -2,7 +2,7 @@ import { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
 import { Button } from "@/components/ui/button";
-import { Heart, Calendar, X, MessageCircle, Lock, LogOut } from "lucide-react";
+import { Heart, Calendar, X, MessageCircle, Lock, LogOut, Stethoscope } from "lucide-react";
 import AppointmentScheduler from "@/components/AppointmentScheduler";
 import AIChat from "@/components/AIChat";
 import MyAppointments from "@/components/MyAppointments";
@@ -47,6 +47,13 @@ const PatientDashboard = () => {
             <span className="text-primary-foreground font-bold text-lg">Saúde Inteligente</span>
           </div>
           <div className="flex items-center gap-2">
+            <button
+              onClick={() => navigate("/doctor-login")}
+              className="w-9 h-9 rounded-full bg-primary-foreground/15 flex items-center justify-center"
+              title="Painel Médico"
+            >
+              <Stethoscope className="w-4 h-4 text-primary-foreground" />
+            </button>
             <button
               onClick={() => navigate("/executive-login")}
               className="w-9 h-9 rounded-full bg-primary-foreground/15 flex items-center justify-center"
