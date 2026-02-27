@@ -23,7 +23,7 @@ const TABS: { key: Tab; label: string; icon: React.ElementType }[] = [
 const ExecutiveDashboard = () => {
   const navigate = useNavigate();
   const [activeTab, setActiveTab] = useState<Tab>("dashboard");
-  const [stats, setStats] = useState({ today: 0, scheduled: 0, completed: 0, cancelled: 0, patients: 0, doctors: 0 });
+  const [stats, setStats] = useState({ today: 0, scheduled: 0, completed: 0, cancelled: 0, patients: 0, doctors: 0, revenue: 0 });
 
   useEffect(() => {
     if (sessionStorage.getItem("exec_auth") !== "true") {
@@ -40,19 +40,26 @@ const ExecutiveDashboard = () => {
 
   const fetchStats = async () => {
     const today = new Date().toISOString().split("T")[0];
-    const [{ data: apts }, { data: patients }, { data: docs }] = await Promise.all([
-      supabase.from("appointments").select("date, status"),
+    const [{ data: apts }, { data: patients }, { data: docs }, { data: prices }] = await Promise.all([
+      supabase.from("appointments").select("date, status, doctor_id"),
       supabase.from("profiles").select("id"),
       supabase.from("doctors").select("id"),
+      supabase.from("consultation_prices").select("doctor_id, price"),
     ]);
     if (apts) {
+      const completedApts = apts.filter((a: any) => a.status === "completed");
+      const revenue = completedApts.reduce((sum: number, a: any) => {
+        const p = prices?.find((pr: any) => pr.doctor_id === a.doctor_id);
+        return sum + (p ? Number(p.price) : 0);
+      }, 0);
       setStats({
         today: apts.filter((a: any) => a.date === today).length,
         scheduled: apts.filter((a: any) => a.status === "scheduled").length,
-        completed: apts.filter((a: any) => a.status === "completed").length,
+        completed: completedApts.length,
         cancelled: apts.filter((a: any) => a.status === "cancelled").length,
         patients: patients?.length || 0,
         doctors: docs?.length || 0,
+        revenue,
       });
     }
   };
@@ -101,6 +108,7 @@ const ExecutiveDashboard = () => {
               cancelledCount={stats.cancelled}
               totalPatients={stats.patients}
               totalDoctors={stats.doctors}
+              totalRevenue={stats.revenue}
             />
             <AppointmentCalendar />
           </div>

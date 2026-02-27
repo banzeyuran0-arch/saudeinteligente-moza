@@ -10,6 +10,7 @@ interface Appointment {
   id: string;
   patient_name: string;
   doctor_name: string;
+  doctor_id: string;
   date: string;
   time: string;
   status: string;
@@ -20,6 +21,7 @@ type ViewMode = "day" | "week" | "month";
 const AppointmentCalendar = () => {
   const { toast } = useToast();
   const [appointments, setAppointments] = useState<Appointment[]>([]);
+  const [prices, setPrices] = useState<{ doctor_id: string; price: number }[]>([]);
   const [view, setView] = useState<ViewMode>("day");
   const [currentDate, setCurrentDate] = useState(new Date());
 
@@ -33,13 +35,21 @@ const AppointmentCalendar = () => {
   }, []);
 
   const fetchAppointments = async () => {
-    const { data } = await supabase.from("appointments").select("*").order("date").order("time");
+    const [{ data }, { data: p }] = await Promise.all([
+      supabase.from("appointments").select("*").order("date").order("time"),
+      supabase.from("consultation_prices").select("doctor_id, price"),
+    ]);
     if (data) setAppointments(data as Appointment[]);
+    if (p) setPrices(p as { doctor_id: string; price: number }[]);
   };
 
-  const completeAppointment = async (id: string) => {
-    const { error } = await supabase.from("appointments").update({ status: "completed" }).eq("id", id);
-    if (!error) toast({ title: "Consulta concluída ✅" });
+  const completeAppointment = async (apt: Appointment) => {
+    const { error } = await supabase.from("appointments").update({ status: "completed" }).eq("id", apt.id);
+    if (!error) {
+      const p = prices.find((pr) => pr.doctor_id === apt.doctor_id);
+      const priceStr = p ? ` • +${Number(p.price).toLocaleString("pt-MZ")} MT` : "";
+      toast({ title: `Consulta concluída ✅${priceStr}` });
+    }
   };
 
   const cancelAppointment = async (id: string) => {
@@ -168,7 +178,7 @@ const AppointmentCalendar = () => {
               </div>
               {apt.status === "scheduled" && (
                 <div className="flex gap-2 mt-3 justify-end">
-                  <Button size="sm" onClick={() => completeAppointment(apt.id)} className="bg-green-600 hover:bg-green-700 text-white h-7 text-xs">
+                  <Button size="sm" onClick={() => completeAppointment(apt)} className="bg-green-600 hover:bg-green-700 text-white h-7 text-xs">
                     <CheckCircle className="w-3 h-3 mr-1" /> Concluir
                   </Button>
                   <Button size="sm" variant="outline" onClick={() => rescheduleAppointment(apt.id)} className="h-7 text-xs">
@@ -204,7 +214,7 @@ const AppointmentCalendar = () => {
                     </div>
                     {apt.status === "scheduled" && (
                       <div className="flex gap-2 mt-2 justify-end">
-                        <Button size="sm" onClick={() => completeAppointment(apt.id)} className="bg-green-600 hover:bg-green-700 text-white h-6 text-xs px-2">
+                        <Button size="sm" onClick={() => completeAppointment(apt)} className="bg-green-600 hover:bg-green-700 text-white h-6 text-xs px-2">
                           <CheckCircle className="w-3 h-3" />
                         </Button>
                         <Button size="sm" variant="outline" onClick={() => rescheduleAppointment(apt.id)} className="h-6 text-xs px-2">
