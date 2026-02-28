@@ -7,6 +7,7 @@ import AppointmentScheduler from "@/components/AppointmentScheduler";
 import AIChat from "@/components/AIChat";
 import MyAppointments from "@/components/MyAppointments";
 import PatientNotifications from "@/components/PatientNotifications";
+import PushNotificationBanner from "@/components/PushNotificationBanner";
 
 const PatientDashboard = () => {
   const navigate = useNavigate();
@@ -80,7 +81,8 @@ const PatientDashboard = () => {
 
       {/* Content */}
       <div className="flex-1 px-4 py-6 max-w-lg mx-auto w-full">
-        {/* Notifications always visible on home */}
+        {/* Push notification banner & notifications on home */}
+        {activeTab === "home" && <PushNotificationBanner />}
         {activeTab === "home" && <PatientNotifications />}
 
         {activeTab === "home" && (
