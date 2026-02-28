@@ -16,7 +16,6 @@ serve(async (req) => {
     const sb = createClient(supabaseUrl, supabaseKey);
 
     const now = new Date();
-    const twoHoursFromNow = new Date(now.getTime() + 2 * 60 * 60 * 1000);
     const todayStr = now.toISOString().split("T")[0];
 
     // 1. Find appointments happening within the next 2 hours that don't have a reminder yet
@@ -44,13 +43,35 @@ serve(async (req) => {
 
           if (!existing || existing.length === 0) {
             const expiresAt = new Date(now.getTime() + 30 * 60 * 1000);
+            const message = `Lembrete: Sua consulta com ${apt.doctor_name} é hoje às ${apt.time}. Confirma a sua presença?`;
+            
             await sb.from("notifications").insert({
               patient_id: apt.patient_id,
               appointment_id: apt.id,
-              message: `Lembrete: Sua consulta com ${apt.doctor_name} é hoje às ${apt.time}. Confirma a sua presença?`,
+              message,
               type: "reminder",
               expires_at: expiresAt.toISOString(),
             });
+
+            // Send push notification to patient
+            try {
+              await fetch(`${supabaseUrl}/functions/v1/send-push`, {
+                method: "POST",
+                headers: {
+                  "Content-Type": "application/json",
+                  "Authorization": `Bearer ${supabaseKey}`,
+                },
+                body: JSON.stringify({
+                  userId: apt.patient_id,
+                  title: "🩺 Lembrete de Consulta",
+                  body: `Consulta com ${apt.doctor_name} às ${apt.time}. Abra o app para confirmar.`,
+                  tag: `reminder-${apt.id}`,
+                  url: "/dashboard",
+                }),
+              });
+            } catch (pushErr) {
+              console.error("Failed to send push:", pushErr);
+            }
           }
         }
       }
@@ -59,7 +80,7 @@ serve(async (req) => {
     // 2. Auto-cancel appointments where reminder expired (30 min) without response
     const { data: expiredNotifs } = await sb
       .from("notifications")
-      .select("*, appointments!inner(id, status)")
+      .select("*")
       .eq("type", "reminder")
       .eq("responded", false)
       .lt("expires_at", now.toISOString());
@@ -88,6 +109,26 @@ serve(async (req) => {
           responded: true,
           response: "info",
         });
+
+        // Send push about auto-cancellation
+        try {
+          await fetch(`${supabaseUrl}/functions/v1/send-push`, {
+            method: "POST",
+            headers: {
+              "Content-Type": "application/json",
+              "Authorization": `Bearer ${supabaseKey}`,
+            },
+            body: JSON.stringify({
+              userId: notif.patient_id,
+              title: "❌ Consulta Cancelada",
+              body: "Sua consulta foi cancelada automaticamente por falta de confirmação.",
+              tag: `cancel-${notif.appointment_id}`,
+              url: "/dashboard",
+            }),
+          });
+        } catch (pushErr) {
+          console.error("Failed to send cancel push:", pushErr);
+        }
       }
     }
 
