@@ -57,6 +57,15 @@ const ReportsAndBilling = () => {
     if (p) setPrices(p as Price[]);
   };
 
+  useEffect(() => {
+    const ch = supabase
+      .channel("billing-rt")
+      .on("postgres_changes", { event: "*", schema: "public", table: "appointments" }, () => fetchData())
+      .on("postgres_changes", { event: "*", schema: "public", table: "consultation_prices" }, () => fetchData())
+      .subscribe();
+    return () => { supabase.removeChannel(ch); };
+  }, []);
+
   const filteredApts = appointments.filter(
     (a) => a.date >= startDate && a.date <= endDate
   );
@@ -81,13 +90,30 @@ const ReportsAndBilling = () => {
   }).sort((a, b) => b.total - a.total);
 
   const addPrice = async () => {
-    if (!priceForm.doctor_id) return;
-    const { error } = await supabase.from("consultation_prices").upsert({
-      doctor_id: priceForm.doctor_id,
-      description: priceForm.description,
-      price: parseFloat(priceForm.price),
-    }, { onConflict: "doctor_id,description" });
-    if (error) { toast({ title: "Erro ao salvar preço", variant: "destructive" }); return; }
+    if (!priceForm.doctor_id) {
+      toast({ title: "Selecione um médico", variant: "destructive" });
+      return;
+    }
+    // Check if price already exists for this doctor
+    const existing = prices.find((p) => p.doctor_id === priceForm.doctor_id);
+    let error;
+    if (existing) {
+      ({ error } = await supabase.from("consultation_prices").update({
+        description: priceForm.description,
+        price: parseFloat(priceForm.price),
+      }).eq("id", existing.id));
+    } else {
+      ({ error } = await supabase.from("consultation_prices").insert({
+        doctor_id: priceForm.doctor_id,
+        description: priceForm.description,
+        price: parseFloat(priceForm.price),
+      }));
+    }
+    if (error) {
+      console.error("Price save error:", error);
+      toast({ title: "Erro ao salvar preço", description: error.message, variant: "destructive" });
+      return;
+    }
     toast({ title: "Preço salvo ✅" });
     setShowPriceForm(false);
     fetchData();
