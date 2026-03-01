@@ -51,11 +51,19 @@ const DoctorDashboard = () => {
   };
 
   const completeAppointment = async (apt: Appointment) => {
-    const { error } = await supabase.from("appointments").update({ status: "completed" }).eq("id", apt.id);
-    if (!error) {
+    try {
+      const { error } = await supabase.from("appointments").update({ status: "completed" }).eq("id", apt.id);
+      if (error) {
+        console.error("Erro ao concluir:", error);
+        toast({ title: "Erro ao concluir consulta", description: error.message, variant: "destructive" });
+        return;
+      }
       const p = prices.find((pr) => pr.doctor_id === apt.doctor_id);
       const priceStr = p ? ` • +${Number(p.price).toLocaleString("pt-MZ")} MT` : "";
       toast({ title: `Consulta concluída ✅${priceStr}` });
+    } catch (err) {
+      console.error("Erro inesperado:", err);
+      toast({ title: "Erro inesperado", variant: "destructive" });
     }
   };
 
