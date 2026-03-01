@@ -32,8 +32,8 @@ const Splash = () => {
           <h1 className="text-3xl font-bold text-primary-foreground tracking-tight">
             Saúde Inteligente
           </h1>
-          <p className="text-primary-foreground/60 text-sm mt-1 font-light tracking-widest">
-            2.0
+          <p className="text-primary-foreground/70 text-sm mt-1">
+            Gaza — Xai-Xai
           </p>
         </div>
       </div>
