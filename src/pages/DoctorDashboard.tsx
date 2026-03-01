@@ -111,6 +111,7 @@ const DoctorDashboard = () => {
           </button>
         </div>
         <p className="text-primary-foreground/80 text-sm">Olá, {doctorName} 👋</p>
+        <p className="text-primary-foreground/60 text-xs">Clínica Gaza — Xai-Xai</p>
       </div>
 
       <div className="max-w-lg mx-auto px-4 py-6 space-y-6">

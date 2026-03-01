@@ -75,7 +75,7 @@ const PatientDashboard = () => {
           Olá, {firstName || "Paciente"} 👋
         </h2>
         <p className="text-primary-foreground/70 text-sm mt-1">
-          Como podemos ajudar hoje?
+          Clínica Gaza — Xai-Xai • Como podemos ajudar hoje?
         </p>
       </div>
 
